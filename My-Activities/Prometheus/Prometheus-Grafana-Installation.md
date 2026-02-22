@@ -1,9 +1,18 @@
 ## Prometheus-Grafana Install
 
+---
+### High-Level
 
-## Prometheus Install
+1. Download prometheus software
+2. Install the node exporter
+3. Configure the prometheus.yml to scrape the node metrics
+4. Install Grafana, Set a prometheus as a datasource
+5. Add second target(EC2) to a prometheus
 
-## Step 1: Navigate to Prometheus website download folder and install it using wget
+---
+### Prometheus Install
+
+### Step 1: Navigate to Prometheus website download folder and install it using wget
 
 
 [Prometheus](https://prometheus.io/download/)
@@ -77,7 +86,9 @@ Eg: http://15.206.84.140:9090/
 
 ---
 
-## Step 2: Install the node exporter
+### Step 2: Install the node exporter
+
+  - Node Exporter = Agent installed on server to expose system metrics to Prometheus
 
 - copy link of linux and download using wget
 
@@ -130,17 +141,20 @@ root@ip-172-31-8-173:~# systemctl status node_exporter
       Tasks: 3 (limit: 1121)
      Memory: 2.0M (peak: 2.3M)
 
+
+curl http://localhost:9100/metrics | head    # You should see metrics output
+
 ```
 
 ---
 
-## Step 3: Now configure the prometheus.yml to scrape the node metrics
+### Step 3: Add New Target in Prometheus Config
 
 
 
 ```bash
 # Just take backup for safety
-cp /etc/prometheus/prometheus.yml
+cp /etc/prometheus/prometheus.yml /etc/prometheus/prometheus.yml-bkp
 > /etc/prometheus/prometheus.yml
 vi /etc/prometheus/prometheus.yml
 
@@ -184,7 +198,7 @@ root@ip-172-31-8-173:~# systemctl status prometheus
 
 ---
 
-## Grafana Install
+### Grafana Install
 
 - Install grafana from apt repository- [Link](https://grafana.com/docs/grafana/latest/setup-grafana/installation/debian/#install-from-apt-repository)
 
@@ -248,3 +262,35 @@ password: admin
 
 <img width="1918" height="847" alt="image" src="https://github.com/user-attachments/assets/08f02d9d-a6ba-40ad-8f53-f614a529786e" />
 
+- Grafana Dashboard is ready
+
+<img width="1919" height="930" alt="image" src="https://github.com/user-attachments/assets/6cbe6fd4-d689-4d90-9cbb-9ceaad23c212" />
+
+---
+
+5. Add second target(EC2) to a prometheus
+
+- Install node_exporter - follow step 2
+- Add New Target in Prometheus Config - follow step 2, below is the reference yml file
+
+```bash
+root@ip-172-31-8-173:~# cat /etc/prometheus/prometheus.yml
+
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+- job_name: node
+  static_configs:
+  - targets: ['172.31.8.173:9100']
+
+- job_name: second-ec2
+  static_configs:
+  - targets: ['172.31.9.162:9100']
+```
+
+- Now we can see the newly added targets are visible both in grafana and prometheus
+
+<img width="1919" height="597" alt="image" src="https://github.com/user-attachments/assets/003a15d0-ad19-4170-a749-ceeb94e8ec60" />
+
+<img width="1916" height="931" alt="image" src="https://github.com/user-attachments/assets/efd5c72e-5a34-450c-ae37-875a1e5d0866" />
