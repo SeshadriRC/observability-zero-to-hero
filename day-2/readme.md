@@ -122,7 +122,7 @@ kubectl get all -n monitoring
 ```
 - **Prometheus UI**:
 ```bash
-kubectl port-forward service/prometheus-operated -n monitoring 9090:9090
+kubectl port-forward svc/monitoring-kube-prometheus-prometheus 9090:9090 --address 0.0.0.0 -n monitoring
 ```
 
 **NOTE:** If you are using an EC2 Instance or Cloud VM, you need to pass `--address 0.0.0.0` to the above command. Then you can access the UI on <instance-ip:port>
@@ -148,7 +148,7 @@ kubectl port-forward service/prometheus-operated -n monitoring 9090:9090
 
   **Port-forwarding to access Grafana UI:**
   ```bash
-  kubectl port-forward service/monitoring-grafana -n monitoring 8080:80
+  kubectl port-forward svc/monitoring-grafana 8090:80 --address 0.0.0.0 -n monitoring
   ```
 - **Alertmanager UI**:
 ```bash
