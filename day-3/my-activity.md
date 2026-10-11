@@ -18,6 +18,9 @@ Run a pod that is always crashing
 kubectl run busybox-crash --image=busybox -- /bin/sh -c "exit 1"
 
 kube_pod_container_status_restarts_total{namespace="default"} -> After crashing it will show
+
+- also we can see how many configmap created in last 5 mins or how many secrets.
+- cpu, memory usages
 ```
 
 <img width="1917" height="707" alt="image" src="https://github.com/user-attachments/assets/dabe85ad-00a0-435c-acfc-9018eabc3a3f" />
