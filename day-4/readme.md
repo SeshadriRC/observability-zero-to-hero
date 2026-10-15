@@ -1,5 +1,6 @@
 - Instrumentation is done for only service-A (day-4/application/service-a/index.js)
-- Apply it using kubernetes manifest (day-4/kubernetes-manifest) 
+- Apply it using kubernetes manifest (day-4/kubernetes-manifest)
+- Read the `my-activities` file to know about the [practicals](https://github.com/SeshadriRC/observability-zero-to-hero/blob/main/day-4/my-activities.md) during the video.
 
 ## 🎛️ Instrumentation
 - Instrumentation refers to the process of adding monitoring capabilities to your applications, systems, or services.
