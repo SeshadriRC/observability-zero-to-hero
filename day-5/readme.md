@@ -1,6 +1,9 @@
 ### my notes
 
 ```bash
+# Im going to do install it in the kind cluster, so skip AWS steps.
+
+# For fluentbit
 Input -> from where the logs has been taken [ its from the /var/log/containers ]
 
 Output -> need to update the elastic search password here in two places, so that it can transfer the logs to elastic search
@@ -77,10 +80,17 @@ kubectl create namespace logging
 ```bash
 helm repo add elastic https://helm.elastic.co
 
+# EKS cluster
 helm install elasticsearch \
  --set replicas=1 \
  --set volumeClaimTemplate.storageClassName=gp2 \
  --set persistence.labels.enabled=true elastic/elasticsearch -n logging
+
+# EC2 kind cluster
+helm install elasticsearch elastic/elasticsearch \
+  --set replicas=1 \
+  --set volumeClaimTemplate.storageClassName="" \
+  -n logging
 ```
 - Installs Elasticsearch in the `logging` namespace.
 - It sets the number of replicas, specifies the storage class, and enables persistence labels to ensure
