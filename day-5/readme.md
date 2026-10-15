@@ -1,3 +1,15 @@
+### my notes
+
+```bash
+Input -> from where the logs has been taken [ its from the /var/log/containers ]
+
+Output -> need to update the elastic search password here in two places, so that it can transfer the logs to elastic search
+
+service -> clusterIP or load balancer
+
+luaScripts: -> we can ignore the namespace , so that it won't get captured in logs
+```
+
 # 🔍 Logging overview
 - Logging is crucial in any distributed system, especially in Kubernetes, to monitor application behavior, detect issues, and ensure the smooth functioning of microservices.
 
