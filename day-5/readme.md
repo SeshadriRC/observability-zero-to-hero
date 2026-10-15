@@ -28,6 +28,8 @@ kubectl delete role post-delete-kibana-kibana -n logging
 kubectl delete rolebindings post-delete-kibana-kibana -n logging
 
 kubectl get sa,job,role,rolebinding,cm -n logging | grep kibana
+
+kubectl port-forward svc/kibana-kibana 5601:5601  --address 0.0.0.0 -n logging
 ```
 
 # 🔍 Logging overview
