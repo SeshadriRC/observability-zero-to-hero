@@ -1,3 +1,6 @@
+- Instrumentation is done for only service-A (day-4/application/service-a/index.js)
+- Apply it using kubernetes manifest (day-4/kubernetes-manifest) 
+
 ## 🎛️ Instrumentation
 - Instrumentation refers to the process of adding monitoring capabilities to your applications, systems, or services.
 - This involves embedding/Writting code or using tools to collect metrics, logs, or traces that provide insights into how the system is performing.
