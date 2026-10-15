@@ -16,6 +16,7 @@ luaScripts: -> we can ignore the namespace , so that it won't get captured in lo
 ---
 
 ```bash
+# Commands used
 kubectl get pods -n logging
 
 helm uninstall kibana -n logging nohooks
