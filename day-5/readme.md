@@ -13,6 +13,22 @@ service -> clusterIP or load balancer
 luaScripts: -> we can ignore the namespace , so that it won't get captured in logs
 ```
 
+---
+
+```bash
+kubectl get pods -n logging
+
+helm uninstall kibana -n logging nohooks
+kubectl delete cm kibana-kibana-helm-scripts -n logging
+kubectl delete sa post-delete-kibana-kibana -n logging
+kubectl delete sa pre-install-kibana-kibanaa -n logging
+kubectl delete job pre-install-kibana-kibana -n logging
+kubectl delete role post-delete-kibana-kibana -n logging
+kubectl delete rolebindings post-delete-kibana-kibana -n logging
+
+kubectl get sa,job,role,rolebinding,cm -n logging | grep kibana
+```
+
 # 🔍 Logging overview
 - Logging is crucial in any distributed system, especially in Kubernetes, to monitor application behavior, detect issues, and ensure the smooth functioning of microservices.
 
@@ -89,7 +105,7 @@ helm install elasticsearch \
 # EC2 kind cluster
 helm install elasticsearch elastic/elasticsearch \
   --set replicas=1 \
-  --set volumeClaimTemplate.storageClassName="" \
+  --set persistence.enabled=false \
   -n logging
 ```
 - Installs Elasticsearch in the `logging` namespace.
@@ -110,6 +126,12 @@ kubectl get secrets --namespace=logging elasticsearch-master-credentials -ojsonp
 ### 7) Install Kibana
 ```bash
 helm install kibana --set service.type=LoadBalancer elastic/kibana -n logging
+
+# EC2
+helm install kibana elastic/kibana -n logging \
+  --set service.type=LoadBalancer \
+  --set resources.requests.cpu=100m \
+  --set resources.requests.memory=512Mi
 ```
 - Kibana provides a user-friendly interface for exploring and visualizing data stored in Elasticsearch.
 - It is exposed as a LoadBalancer service, making it accessible from outside the cluster.
