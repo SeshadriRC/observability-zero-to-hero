@@ -97,6 +97,8 @@ or use the pre-built images
 kubectl create ns dev
 
 kubectl apply -k kubernetes-manifest/
+
+kubectl port-forward svc/a-service 9070:80 --address 0.0.0.0 -n dev
 ```
 
 ## 4) Test all the endpoints
