@@ -37,7 +37,7 @@
 - Storage: Stores traces for later retrieval (often a database like *Elasticsearch*).
 
 
-### Install elastic search
+### Install elastic search and get the username/password
 
 https://github.com/SeshadriRC/observability-zero-to-hero/tree/main/day-5#4-create-namespace-for-logging
 
