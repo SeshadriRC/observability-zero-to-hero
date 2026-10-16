@@ -156,6 +156,7 @@ follow the [day-4](https://github.com/SeshadriRC/observability-zero-to-hero/tree
 - Use the username and password retrieved in step 6 to log in.
 - Once logged in, create a new data view in Kibana and explore the logs collected from your Kubernetes cluster.
 
+<img width="1917" height="972" alt="image" src="https://github.com/user-attachments/assets/10b7cb18-48fb-4aeb-8b4a-54bc89d42e60" />
 
 
 ## 🧼 Clean Up
