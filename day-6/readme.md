@@ -37,6 +37,10 @@
 - Storage: Stores traces for later retrieval (often a database like *Elasticsearch*).
 
 
+### Install elastic search
+
+https://github.com/SeshadriRC/observability-zero-to-hero/tree/main/day-5#4-create-namespace-for-logging
+
 ### Step 3: Export Elasticsearch CA Certificate
 - This command retrieves the CA certificate from the Elasticsearch master certificate secret and decodes it, saving it to a ca-cert.pem file.
 ```bash
@@ -48,6 +52,8 @@ kubectl get secret elasticsearch-master-certs -n logging -o jsonpath='{.data.ca\
 ```bash
 kubectl create ns tracing
 ```
+
+
 
 ### Step 5: Create ConfigMap for Jaeger's TLS Certificate
 - Creates a ConfigMap in the tracing namespace, containing the CA certificate to be used by Jaeger for TLS.
