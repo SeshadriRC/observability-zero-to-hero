@@ -86,6 +86,10 @@ kubectl port-forward svc/jaeger-query 8080:80 -n tracing
 
 ```
 
+### Step 10: Deploy the application
+
+- Deploy the application which is in (day-4/application/service-a/tracing.js)
+
 ## 🧼 Clean Up
 ```bash
 
