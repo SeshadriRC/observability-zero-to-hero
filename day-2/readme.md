@@ -152,7 +152,7 @@ kubectl port-forward svc/monitoring-kube-prometheus-prometheus 9090:9090 --addre
   ```
 - **Alertmanager UI**:
 ```bash
-kubectl port-forward service/alertmanager-operated -n monitoring 9093:9093
+kubectl port-forward service/alertmanager-operated -n monitoring 9093:9093 --address 0.0.0.0
 ```
 
 ### 🧼 Step 5: Clean UP
