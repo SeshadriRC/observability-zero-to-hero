@@ -17,8 +17,8 @@ spec:
     spec:
       containers:
       # - image: ankitjodhani/golang-svc-b:latest
-      - image: <<IMAGE_NAME_ID>>:<<TAG>>
-        name: service-a
+      - image: sesharc/microservice-b
+        name: service-b
         imagePullPolicy: Always
         ports:
         - containerPort: 80
