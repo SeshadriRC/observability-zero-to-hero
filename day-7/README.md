@@ -1,3 +1,10 @@
+## Below is the repo
+
+```
+https://opentelemetry.io/docs/demo/kubernetes-deployment/
+https://github.com/open-telemetry/opentelemetry-demo
+```
+
 ## 📊 What is OpenTelemetry?
 - OpenTelemetry is an open-source observability framework for generating, collecting, and exporting telemetry data (traces, metrics, logs) to help monitor applications.
 
