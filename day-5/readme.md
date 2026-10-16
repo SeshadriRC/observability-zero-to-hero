@@ -145,6 +145,9 @@ helm install kibana elastic/kibana -n logging \
 helm repo add fluent https://fluent.github.io/helm-charts
 helm install fluent-bit fluent/fluent-bit -f fluentbit-values.yaml -n logging
 ```
+### 9) Deploy the application and test it
+
+follow the [day-4](https://github.com/SeshadriRC/observability-zero-to-hero/tree/main/day-4#3-kubernetes-manifest)
 
 ## ✅ Conclusion
 - We have successfully installed the EFK stack in our Kubernetes cluster, which includes Elasticsearch for storing logs, Fluentbit for collecting and forwarding logs, and Kibana for visualizing logs.
