@@ -1,0 +1,154 @@
+extraEnvs:
+  - name: "ELASTICSEARCH_USERNAME"
+    valueFrom:
+      secretKeyRef:
+        name: elasticsearch-master-credentials
+        key: username
+  - name: "ELASTICSEARCH_PASSWORD"
+    valueFrom:
+      secretKeyRef:
+        name: elasticsearch-master-credentials
+        key: password
+
+logstashConfig:
+  logstash.yml: |
+    http.host: 0.0.0.0
+    xpack.monitoring.enabled: false
+
+logstashPipeline:
+  logstash.conf: |
+    input {
+      beats {
+        port => 5044
+      }
+    }
+
+    filter {
+      # 1. DROP NOISE: Drop health checks, metric heartbeats, and noisy system probes
+      if [kubernetes][container][name] =~ /(fluent-bit|filebeat)/ and [message] =~ /(Non-zero metrics|DEPRECATED)/ {
+        drop { }
+      }
+      if [message] =~ /(GET \/healthz|GET \/livez|kube-probe)/ {
+        drop { }
+      }
+
+      # 2. JSON PARSER: Parse structured JSON logs (e.g. sample-logger)
+      if [message] =~ /^\{.*\}$/ {
+        json {
+          source => "message"
+          target => "parsed_json"
+          skip_on_invalid_json => true
+        }
+
+        if [parsed_json][level] {
+          mutate {
+            add_field => { "[log][level]" => "%{[parsed_json][level]}" }
+          }
+        }
+        if [parsed_json][app] {
+          mutate {
+            add_field => { "[service][name]" => "%{[parsed_json][app]}" }
+          }
+        }
+        if [parsed_json][error_code] {
+          mutate {
+            add_field => { "[error][code]" => "%{[parsed_json][error_code]}" }
+          }
+        }
+        if [parsed_json][order_id] {
+          mutate {
+            add_field => { "order_id" => "%{[parsed_json][order_id]}" }
+          }
+        }
+        if [parsed_json][message] {
+          mutate {
+            replace => { "message" => "%{[parsed_json][message]}" }
+          }
+        }
+        if [parsed_json][timestamp] {
+          date {
+            match => [ "[parsed_json][timestamp]", "ISO8601", "yyyy-MM-dd'T'HH:mm:ss'Z'", "yyyy-MM-dd'T'HH:mm:ss.SSSZ" ]
+            target => "@timestamp"
+          }
+        }
+      }
+
+      # 3. LOG LEVEL NORMALIZATION (for plain text logs or fallback)
+      if ![log][level] {
+        if [message] =~ /(?i)(fatal|critical|error|exception|fail)/ {
+          mutate { add_field => { "[log][level]" => "ERROR" } }
+        } else if [message] =~ /(?i)(warn|warning)/ {
+          mutate { add_field => { "[log][level]" => "WARN" } }
+        } else if [message] =~ /(?i)(debug|trace)/ {
+          mutate { add_field => { "[log][level]" => "DEBUG" } }
+        } else {
+          mutate { add_field => { "[log][level]" => "INFO" } }
+        }
+      }
+
+      mutate {
+        uppercase => [ "[log][level]" ]
+      }
+
+      # 4. ECS SERVICE NAME FALLBACK: Set service.name from kubernetes container if not set
+      if ![service][name] and [kubernetes][container][name] {
+        mutate {
+          add_field => { "[service][name]" => "%{[kubernetes][container][name]}" }
+        }
+      }
+    }
+
+    output {
+      elasticsearch {
+        hosts => ["https://elasticsearch-master:9200"]
+        index => "elk-logstash-%{+YYYY.MM.dd}"
+        cacert => "/usr/share/logstash/config/elasticsearch-master-certs/ca.crt"
+        user => '${ELASTICSEARCH_USERNAME}'
+        password => '${ELASTICSEARCH_PASSWORD}'
+      }
+    }
+
+secretMounts:
+  - name: "elasticsearch-master-certs"
+    secretName: "elasticsearch-master-certs"
+    path: "/usr/share/logstash/config/elasticsearch-master-certs"
+
+service:
+  type: ClusterIP
+  ports:
+    - name: beats
+      port: 5044
+      protocol: TCP
+      targetPort: 5044
+    - name: http
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+
+resources:
+  requests:
+    cpu: "200m"
+    memory: "200Mi"
+  limits:
+    cpu: "1000m"
+    memory: "1536Mi"
+
+readinessProbe:
+  httpGet: null
+  tcpSocket:
+    port: 5044
+  initialDelaySeconds: 60
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+  successThreshold: 1
+
+livenessProbe:
+  httpGet: null
+  tcpSocket:
+    port: 5044
+  initialDelaySeconds: 120
+  periodSeconds: 15
+  timeoutSeconds: 5
+  failureThreshold: 3
+  successThreshold: 1

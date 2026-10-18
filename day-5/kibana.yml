@@ -1,0 +1,15 @@
+kibanaConfig:
+  kibana.yml: |
+    xpack.encryptedSavedObjects.encryptionKey: "GbxzA/TOlPiGyZqqi++HbA/2o3Q/251FD8BP0jLxgH8="
+
+service:
+  type: NodePort
+  port: 5601
+
+resources:
+  requests:
+    cpu: "200m"
+    memory: "200Mi"
+  limits:
+    cpu: "1000m"
+    memory: "2Gi"

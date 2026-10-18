@@ -1,3 +1,22 @@
+# 📚 Day 5: Kubernetes Observability - Logging (EFK & ELK Stacks)
+
+> 💡 **Looking for the complete step-by-step setup guide from scratch?**
+> See the complete production guide in **[SETUP-GUIDE.md](SETUP-GUIDE.md)**!
+>
+> **Related Reference Guides:**
+> - 🎓 **[Senior DevOps & SRE Master Guide](SENIOR-DEVOPS-ELK-EFK-GUIDE.md)** (Deep internals, sizing math, incident runbooks, ES|QL, and ECS)
+> - 🔔 **[Dashboards & Slack Alerting Guide](DASHBOARDS-AND-SLACK-ALERTING.md)** (Kibana Lens panels, Slack Webhook integration, and alerting rules)
+> - 🛠️ **[Kibana Troubleshooting Guide](kibana-troubleshooting.md)** (Fixing "Kibana server is not ready yet" / HTTP 503)
+> - 🔍 **[Kibana Log Investigation Guide](kibana-log-investigation-guide.md)** (Hands-on KQL search, queries, and column setup)
+> - 📋 **[Session Handover & Quick Reference](RESUME-NOTES.md)**
+>
+> **Configuration Manifests:**
+> - [`elasticsearch-values.yml`](elasticsearch-values.yml) | [`kibana.yml`](kibana.yml) | [`fluentbit-values.yaml`](fluentbit-values.yaml)
+> - [`filebeat-values.yml`](filebeat-values.yml) | [`logstash-values.yml`](logstash-values.yml) | [`metric-beat-values.yml`](metric-beat-values.yml) | [`metric-rbac.yml`](metric-rbac.yml)
+> - [`sample-logger.yaml`](sample-logger.yaml)
+
+---
+
 ### my notes
 
 ```bash
