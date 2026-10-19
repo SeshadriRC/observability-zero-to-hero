@@ -439,7 +439,21 @@ Your objective as the Lead DevOps / SRE Engineer is to:
 
 ## 💡 Task 3: Step-by-Step Solution & Implementation
 
-### Step 1: Quantify the Leak with Elasticsearch Aggregations
+### Step 1: Quantify the Leak with Elasticsearch Aggregations & Kibana KQL
+
+#### Method 1: In Kibana Discover (KQL Query)
+Paste this query into the search bar in **Kibana Discover** to filter and see all the redundant noise events:
+```kql
+kubernetes.pod.name.keyword: fluent-bit* and message: (
+  "failed to flush chunk" or
+  "unable to authenticate user" or
+  "status=401" or
+  "Non-zero metrics" or
+  "DEPRECATED"
+)
+```
+
+#### Method 2: Via Terminal (Elasticsearch Aggregations)
 Run this query to see which pods are responsible for the log explosion:
 
 ```bash
@@ -509,7 +523,7 @@ kubectl rollout status ds/fluent-bit -n logging
    ```bash
    kubectl logs -n logging -l app.kubernetes.io/name=fluent-bit --tail=20
    ```
-2. Search Elasticsearch for any new `failed to flush chunk` messages in the last 5 minutes:
+2. Search Elasticsearch via Terminal for any new `failed to flush chunk` messages in the last 5 minutes:
    ```bash
    curl -sk -u elastic:0P1rf1AiLY0ucHSd \
      "https://172.18.0.2:30920/elk-logstash-*/_search" \
@@ -525,6 +539,19 @@ kubectl rollout status ds/fluent-bit -n logging
    }' | jq '.hits.total'
    ```
    *Expected response:* `"value": 0`!
+
+3. **Verify in Kibana Discover (KQL)**:
+   Search for the noise pattern in the **Last 15 minutes**:
+   ```kql
+   kubernetes.pod.name.keyword: fluent-bit* and message: (
+     "failed to flush chunk" or
+     "unable to authenticate user" or
+     "status=401" or
+     "Non-zero metrics" or
+     "DEPRECATED"
+   )
+   ```
+   *Expected result in Discover:* **No results found** (0 hits)! All feedback storm noise is stopped!
 
 ---
 
