@@ -17,6 +17,46 @@ Welcome to your hands-on **ELK Observability Practice Lab**. This guide contains
 
 ---
 
+## 🧠 Core Concept: What is a "Document" in Elasticsearch?
+
+If you come from a relational database (SQL) or Linux background, here is the exact mental model:
+
+| Relational DB (MySQL / Postgres) | Elasticsearch (ELK Stack) | Kubernetes Logging Equivalent |
+| :--- | :--- | :--- |
+| **Database** | **Cluster** | Your entire running ELK deployment |
+| **Table** | **Index** (e.g., `elk-logstash-2026.10.19`) | A date-based bucket of logs |
+| **Row** | **Document** (`doc`) | **A single log event / line emitted by a pod** |
+| **Column** | **Field** (e.g., `log.level`, `message`) | An attribute extracted from that log |
+| **Primary Key** | **Document ID** (`_id`) | Unique identifier generated for that log |
+
+### What does a Document look like inside Elasticsearch?
+In Elasticsearch, **every single document is a JSON object**. When `sample-logger` outputs one line:
+```json
+{
+  "_index": "elk-logstash-2026.10.19",
+  "_id": "4h9FZo8Bn7g",
+  "_source": {
+    "@timestamp": "2026-10-19T07:19:10.000Z",
+    "kubernetes": {
+      "namespace": "default",
+      "pod": { "name": "sample-logger-7786ff4b54-ktdkc" }
+    },
+    "service": { "name": "sample-logger" },
+    "log": { "level": "INFO" },
+    "order_id": 1561,
+    "message": "User order processed successfully"
+  }
+}
+```
+
+### Why did "176,000 documents in 1 hour" matter?
+- **1 document = 1 log record stored in the database.**
+- 176,000 documents meant **176,000 individual log lines** were shipped, indexed, and written to disk in 60 minutes (~50 logs every single second).
+- When we analyzed it, **134,000 of those documents** were identical, useless retry error lines from Fluent-bit trying and failing to authenticate.
+- Each document consumes CPU (for JSON/Grok parsing), RAM (Lucene index buffers), and disk storage. Eliminating those junk documents saved cluster memory and stopped disk from filling up!
+
+---
+
 ## 📋 Workshop Roadmap
 
 | Task | Domain | Focus Area | Status |
