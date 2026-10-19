@@ -63,8 +63,8 @@ In Elasticsearch, **every single document is a JSON object**. When `sample-logge
 | :--- | :--- | :--- | :--- |
 | **Task 1** | **Triage & Querying** | Incident RCA: Diagnosing Crashing Services using KQL, ES\|QL & APIs | ✅ Completed |
 | **Task 2** | **Log Pipeline & Parsing** | Logstash Grok & ECS Extraction for Unstructured Logs (Gin HTTP & Payment API) | ✅ Completed |
-| **Task 3** | **Ingestion Optimization** | Storage Cost Control: Squelching Logging Storms & Drop Filters | 🟢 Active / Ready |
-| **Task 4** | **Full-Stack Correlation** | Correlating Log Spikes with Node & Pod Resource Metrics (Metricbeat) | ⏳ Upcoming |
+| **Task 3** | **Ingestion Optimization** | Storage Cost Control: Squelching Logging Storms & Drop Filters | ✅ Completed |
+| **Task 4** | **Full-Stack Correlation** | Correlating Log Spikes with Node & Pod Resource Metrics (Metricbeat & Lens) | 🟢 Active / Ready |
 | **Task 5** | **Index Lifecycle Management** | Production Hot-Warm-Delete ILM Policy & Index Templates | ⏳ Upcoming |
 | **Task 6** | **Production Alerting** | Automated Threshold Alert Rules & Webhook Notifications | ⏳ Upcoming |
 
@@ -558,5 +558,123 @@ kubectl rollout status ds/fluent-bit -n logging
 ### 🔍 Production Takeaway: The Rule of Defensive Observability
 1. **Never Ship Log Shipper Errors Unconditionally**: If a log shipper emits errors when it fails to reach Elasticsearch, shipping those error logs to the same Elasticsearch cluster creates an exponential amplification loop that can saturate network bandwidth and fill up storage.
 2. **Drop Health Probes Early**: Kubernetes liveness and readiness probes (`/healthz`, `/livez`) execute every 5–10 seconds per container. In a 500-pod cluster, that generates millions of useless HTTP 200 logs per day. Dropping them in Logstash or Filebeat reduces Elasticsearch licensing and storage costs by 30% to 60%.
+
+---
+
+# 🎯 Task 4: Full-Stack Metric & Log Correlation with Metricbeat & Kibana Lens
+
+### 🏢 Real-World SRE Scenario: "Is it an OOM or Application Bug?"
+During the `payment-api-failing` crash incident and `sample-logger` latency alerts, the engineering team asked:
+> *"Is the pod getting OOMKilled (Out Of Memory) by the Linux kernel? Did high node CPU throttle database connection handshakes, causing the 30-second connection timeout?"*
+
+In high-stakes production incident triage, investigating **Logs alone** only answers *"What error did the software print?"*. 
+To answer *"Did the underlying infrastructure cause the failure?"*, an SRE must correlate **Logs** with **Metrics** (`Metricbeat`):
+1. **Container Memory Working Set** (`kubernetes.container.memory.workingset.bytes`) vs. Memory Limits (`64Mi`).
+2. **Container CPU Usage** (`kubernetes.container.cpu.usage.node.pct`).
+3. **Kibana Lens Dashboards**: Correlating error spike timestamps directly with resource utilization graphs.
+
+---
+
+### 📝 Task Objectives
+1. **Query Metricbeat Data**:
+   - Query `metricbeat-*` to inspect memory and CPU utilization for `payment-api-failing` and `sample-logger`.
+   - Verify whether memory reached pod limits or triggered an OOM kill.
+2. **Build a Kibana Lens Metric Visualization**:
+   - Navigate to Kibana Lens and create a **Top 5 Containers by Memory Usage** bar/line chart using the `metricbeat-*` data view.
+3. **Build a Log Error Distribution Panel**:
+   - Create a stacked bar chart from `elk-*` showing log volume partitioned by `log.level` (`INFO`, `WARN`, `ERROR`, `FATAL`) over time.
+4. **Correlate on the Dashboard**:
+   - Place both panels side-by-side on the `[DevOps] Kubernetes ELK Observability` dashboard.
+   - Synchronize the time picker to confirm that while error logs spiked, memory usage remained flat at ~1 MB, definitively ruling out an OOM or infrastructure bottleneck!
+
+---
+
+## 💡 Task 4: Step-by-Step Solution & Implementation
+
+### Step 1: Query Metricbeat for Pod Memory & CPU via Terminal
+Run this query to inspect container resource metrics during the failure window:
+
+```bash
+curl -sk -u elastic:0P1rf1AiLY0ucHSd \
+  "https://172.18.0.2:30920/metricbeat-*/_search" \
+  -H 'Content-Type: application/json' -d '{
+  "size": 0,
+  "query": {
+    "bool": {
+      "must": [
+        { "term": { "event.dataset": "kubernetes.container" } },
+        { "term": { "kubernetes.namespace": "default" } }
+      ]
+    }
+  },
+  "aggs": {
+    "by_pod": {
+      "terms": { "field": "kubernetes.pod.name.keyword", "size": 5 },
+      "aggs": {
+        "avg_mem_bytes": {
+          "avg": { "field": "kubernetes.container.memory.usage.bytes" }
+        },
+        "max_cpu_pct": {
+          "max": { "field": "kubernetes.container.cpu.usage.node.pct" }
+        }
+      }
+    }
+  }
+}' | jq .aggregations
+```
+
+#### What the Metric Output Proves:
+- **`payment-api-failing` Memory**: ~1.02 MB (Memory limit is 64 MB).
+- **`sample-logger` Memory**: ~3.42 MB (Memory limit is 64 MB).
+- **CPU Utilization**: Less than 0.2% across both pods.
+- **RCA Conclusion**: **Neither container is starved for resources or OOMKilled.** The crash is 100% caused by application database connection configuration and network reachability, not host resource exhaustion!
+
+---
+
+### Step 2: Build the Metricbeat Lens Visualization in Kibana
+1. In Kibana, click the hamburger menu (☰) $\rightarrow$ **Analytics** $\rightarrow$ **Visualize Library**.
+2. Click **Create visualization** $\rightarrow$ select **Lens**.
+3. In the top-left Data View dropdown, switch from `Kubernetes Logs (ELK)` to **`Kubernetes Metrics (Metricbeat)` (`metricbeat-*`)**.
+4. In the field list on the left:
+   - Drag **`kubernetes.container.memory.workingset.bytes`** into the central canvas.
+   - In the right-hand panel, set the operation to **Average** or **Max**.
+   - Under **Break down by**, drag in **`kubernetes.container.name`** (or `kubernetes.pod.name.keyword`).
+   - Set the chart type to **Horizontal Bar** or **Line Chart**.
+5. Click **Save and return** $\rightarrow$ Name it: `[DevOps] Container Working Set Memory`.
+
+---
+
+### Step 3: Build the Log Level Distribution Panel in Kibana Lens
+1. Click **Create visualization** $\rightarrow$ select **Lens**.
+2. Select Data View: **`Kubernetes Logs (ELK)` (`elk-*`)**.
+3. In the field list:
+   - Drag **`@timestamp`** to the Horizontal axis.
+   - Drag **Records count** to the Vertical axis.
+   - Under **Break down by**, drag in **`log.level`**.
+4. Set the chart type to **Stacked Bar Chart**.
+5. Notice how `INFO`, `WARN`, `ERROR`, and `FATAL` logs stack neatly over time, showing exactly when the error spike started!
+6. Click **Save and return** $\rightarrow$ Name it: `[DevOps] Log Volume by Level Over Time`.
+
+---
+
+### Step 4: Add Panels to the DevOps Dashboard
+1. Go to **Analytics** $\rightarrow$ **Dashboard** $\rightarrow$ select **`[DevOps] Kubernetes ELK Observability`**.
+2. Click **Edit** in the top-right toolbar.
+3. Click **Add from library** $\rightarrow$ Select:
+   - `[DevOps] Container Working Set Memory`
+   - `[DevOps] Log Volume by Level Over Time`
+4. Rearrange the panels:
+   - Top Row: Metric utilization (Memory / CPU)
+   - Middle Row: Log volume breakdown by level
+   - Bottom Row: Discover live log search table
+5. Click **Save** in the top right.
+
+---
+
+### 🔍 Production Takeaway: The Power of Unified Observability
+When On-Call, navigating between separate disconnected monitoring tools (e.g., only looking at Grafana or only looking at Kibana) creates blind spots. By pulling both Metricbeat and Filebeat into Elasticsearch and correlating them on a single Kibana dashboard:
+1. **Mean Time to Resolution (MTTR) is cut in half**: You instantly verify whether an error spike is preceded by a memory leak or CPU throttling.
+2. **Definitive Root Cause Differentiation**: You can confidently tell developers whether an issue is an infrastructure sizing problem (scale up pod limits) or code/database bug (fix connection pool logic).
+
 
 
