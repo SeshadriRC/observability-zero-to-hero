@@ -24,8 +24,8 @@ logstashPipeline:
     }
 
     filter {
-      # 1. DROP NOISE: Drop health checks, metric heartbeats, and noisy system probes
-      if [kubernetes][container][name] =~ /(fluent-bit|filebeat)/ and [message] =~ /(Non-zero metrics|DEPRECATED)/ {
+      # 1. DROP NOISE & FEEDBACK LOOPS
+      if [kubernetes][container][name] =~ /(fluent-bit|filebeat)/ and [message] =~ /(failed to flush chunk|unable to authenticate user|status=401|Non-zero metrics|DEPRECATED)/ {
         drop { }
       }
       if [message] =~ /(GET \/healthz|GET \/livez|kube-probe)/ {
