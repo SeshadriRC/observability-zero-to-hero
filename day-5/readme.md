@@ -4,6 +4,7 @@
 > See the complete production guide in **[SETUP-GUIDE.md](SETUP-GUIDE.md)**!
 >
 > **Related Reference Guides:**
+> - 🎯 **[Hands-On Practice Lab & Tasks](ELK-PRACTICE-TASKS.md)** (Real-time incident triage, KQL/ES|QL, Grok parsing, metrics correlation)
 > - 🎓 **[Senior DevOps & SRE Master Guide](SENIOR-DEVOPS-ELK-EFK-GUIDE.md)** (Deep internals, sizing math, incident runbooks, ES|QL, and ECS)
 > - 🔔 **[Dashboards & Slack Alerting Guide](DASHBOARDS-AND-SLACK-ALERTING.md)** (Kibana Lens panels, Slack Webhook integration, and alerting rules)
 > - 🛠️ **[Kibana Troubleshooting Guide](kibana-troubleshooting.md)** (Fixing "Kibana server is not ready yet" / HTTP 503)
