@@ -39,6 +39,93 @@ Welcome to your hands-on **ELK Observability Practice Lab**. This guide contains
 
 ---
 
+### 📦 Workload Manifests Used in this Scenario
+
+Both workloads run in the `default` namespace and continuously emit logs collected by Filebeat $\rightarrow$ Logstash $\rightarrow$ Elasticsearch.
+
+#### 1. Order Processing Service: [`sample-logger.yaml`](sample-logger.yaml)
+Simulates an e-commerce microservice outputting structured JSON logs with success messages, latency warnings, and database errors:
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sample-logger
+  namespace: default
+  labels:
+    app: sample-logger
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sample-logger
+  template:
+    metadata:
+      labels:
+        app: sample-logger
+    spec:
+      containers:
+      - name: logger
+        image: busybox:1.36
+        args:
+        - /bin/sh
+        - -c
+        - >
+          count=1;
+          while true; do
+            echo "{\"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\", \"level\": \"INFO\", \"app\": \"sample-logger\", \"count\": $count, \"message\": \"User order processed successfully\", \"order_id\": $((1000 + count))}";
+            sleep 3;
+            if [ $((count % 5)) -eq 0 ]; then
+              echo "{\"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\", \"level\": \"ERROR\", \"app\": \"sample-logger\", \"count\": $count, \"message\": \"Database connection timed out during payment confirmation!\", \"error_code\": 500}";
+            elif [ $((count % 3)) -eq 0 ]; then
+              echo "{\"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\", \"level\": \"WARN\", \"app\": \"sample-logger\", \"count\": $count, \"message\": \"High latency detected on checkout service: 1250ms\"}";
+            fi;
+            count=$((count + 1));
+          done
+        resources:
+          limits:
+            cpu: 100m
+            memory: 64Mi
+          requests:
+            cpu: 50m
+            memory: 32Mi
+```
+*Deploy command:* `kubectl apply -f sample-logger.yaml`
+
+#### 2. Crashing Payment Service: [`payment-api-failing.yaml`](payment-api-failing.yaml)
+Simulates a critical downstream microservice failing with connection pool exhaustion and crashing into `CrashLoopBackOff`:
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: payment-api-failing
+  namespace: default
+  labels:
+    app: payment-api
+spec:
+  restartPolicy: Always
+  containers:
+  - name: payment-api
+    image: busybox:latest
+    command: ["/bin/sh", "-c"]
+    args:
+    - |
+      echo "$(date -u +'%Y-%m-%dT%H:%M:%S.000Z') [default/payment-api-failing/payment-api] INFO Starting Payment Processing Service v1.8.2"
+      sleep 2
+      echo "$(date -u +'%Y-%m-%dT%H:%M:%S.000Z') [default/payment-api-failing/payment-api] INFO Initializing database connection pool to postgres-db.internal.svc.cluster.local:5432"
+      sleep 2
+      echo "$(date -u +'%Y-%m-%dT%H:%M:%S.000Z') [default/payment-api-failing/payment-api] ERROR dial tcp: lookup postgres-db.internal.svc.cluster.local on 10.96.0.10:53: no such host"
+      sleep 1
+      echo "$(date -u +'%Y-%m-%dT%H:%M:%S.000Z') [default/payment-api-failing/payment-api] WARN Retrying database connection (attempt 2/3)..."
+      sleep 2
+      echo "$(date -u +'%Y-%m-%dT%H:%M:%S.000Z') [default/payment-api-failing/payment-api] ERROR could not obtain a connection from database pool within 30000ms: connection pool exhausted"
+      sleep 1
+      echo "$(date -u +'%Y-%m-%dT%H:%M:%S.000Z') [default/payment-api-failing/payment-api] FATAL Critical downstream dependency unreachable. Exiting."
+      exit 1
+```
+*Deploy command:* `kubectl apply -f payment-api-failing.yaml`
+
+---
+
 ### 📝 Task Objectives
 1. Open Kibana **Discover** (or use the Elasticsearch Search API / ES|QL).
 2. Filter the log stream to only show logs from namespace `default`.
