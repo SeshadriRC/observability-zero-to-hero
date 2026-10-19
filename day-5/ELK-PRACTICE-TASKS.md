@@ -64,14 +64,36 @@ Welcome to your hands-on **ELK Observability Practice Lab**. This guide contains
      ```kql
      kubernetes.namespace: "default"
      ```
+   - Filter for `sample-logger` (Notice the `.keyword` or `service.name`):
+     ```kql
+     kubernetes.namespace: "default" and kubernetes.pod.name.keyword: sample-logger*
+     ```
+     *or using service name:*
+     ```kql
+     service.name: "sample-logger"
+     ```
    - Find all database and critical errors in `payment-api-failing`:
      ```kql
-     kubernetes.pod.name: "payment-api-failing" and message: (*FATAL* or *ERROR* or *pool*)
+     kubernetes.pod.name.keyword: "payment-api-failing" and message: (*FATAL* or *ERROR* or *pool*)
      ```
    - Find all error events from the order processor (`sample-logger`):
      ```kql
-     kubernetes.pod.name: sample-logger* and (log.level: "ERROR" or error.code: *)
+     service.name: "sample-logger" and (log.level: "ERROR" or error.code: *)
      ```
+
+### ⚠️ Common Pitfalls: Why Might a Query Return 0 Results?
+1. **Space before the Colon (`:`)**:
+   - ❌ `kubernetes.namespace : "default"` (KQL breaks if there is a space before the colon!)
+   - ✅ `kubernetes.namespace: "default"` (No space between field name and colon)
+2. **Wildcards on Analyzed Text vs Keyword**:
+   - `kubernetes.pod.name` is stored as `text` (analyzed, hyphen-separated). When you run a wildcard `sample-logger*`, Elasticsearch searches individual tokens.
+   - ❌ `kubernetes.pod.name: sample-logger*` (fails because tokens are split into `sample` and `logger`)
+   - ✅ `kubernetes.pod.name.keyword: sample-logger*` (uses the exact string keyword index)
+   - ✅ `service.name: "sample-logger"` (direct keyword match)
+3. **Time Picker Range & Clock**:
+   - The lab environment's current system timestamp is **October 19, 2026**.
+   - If your browser's local time is set to the current calendar year (2024/2025), a relative picker like "Last 15 minutes" will search for 2024/2025 and find 0 logs!
+   - **Fix**: In the top-right time picker in Kibana, select **"Last 5 years"** or set an Absolute range for **Oct 19, 2026**.
 
 ---
 
