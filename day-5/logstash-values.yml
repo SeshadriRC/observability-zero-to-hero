@@ -72,8 +72,33 @@ logstashPipeline:
           }
         }
       }
+      # 3. GIN HTTP ACCESS LOG PARSER (dev microservices)
+      else if [message] =~ /^\[GIN\]/ {
+        grok {
+          match => {
+            "message" => "^\[GIN\]\s+%{YEAR}/%{MONTHNUM}/%{MONTHDAY}\s+-\s+%{TIME}\s+\|\s+%{NUMBER:[http][response][status_code]:int}\s+\|\s+%{DATA:[event][duration]}\s+\|\s+%{IP:[client][ip]}\s+\|\s+%{WORD:[http][request][method]}\s+\"%{NOTSPACE:[url][path]}\""
+          }
+        }
+      }
+      # 4. PAYMENT API / BRACKETED MICROSERVICE PARSER
+      else if [message] =~ /^20\d\d-\d\d-\d\dT/ and [message] =~ /\[default\/payment-api/ {
+        grok {
+          match => {
+            "message" => "^%{TIMESTAMP_ISO8601:[@metadata][event_time]}\s+\[%{DATA:[@metadata][ns]}/%{DATA:[@metadata][pod]}/%{DATA:[@metadata][container]}\]\s+%{WORD:[log][level]}\s+%{GREEDYDATA:[@metadata][clean_msg]}$"
+          }
+        }
+        if [@metadata][clean_msg] {
+          mutate {
+            replace => { "message" => "%{[@metadata][clean_msg]}" }
+          }
+          date {
+            match => [ "[@metadata][event_time]", "ISO8601" ]
+            target => "@timestamp"
+          }
+        }
+      }
 
-      # 3. LOG LEVEL NORMALIZATION (for plain text logs or fallback)
+      # 5. LOG LEVEL NORMALIZATION (for plain text logs or fallback)
       if ![log][level] {
         if [message] =~ /(?i)(fatal|critical|error|exception|fail)/ {
           mutate { add_field => { "[log][level]" => "ERROR" } }

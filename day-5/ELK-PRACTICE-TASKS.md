@@ -21,8 +21,8 @@ Welcome to your hands-on **ELK Observability Practice Lab**. This guide contains
 
 | Task | Domain | Focus Area | Status |
 | :--- | :--- | :--- | :--- |
-| **Task 1** | **Triage & Querying** | Incident RCA: Diagnosing Crashing Services using KQL, ES\|QL & APIs | 🟢 Completed / Ready |
-| **Task 2** | **Log Pipeline & Parsing** | Logstash Grok & ECS Extraction for Unstructured Logs (`payment-api`) | ⏳ Next |
+| **Task 1** | **Triage & Querying** | Incident RCA: Diagnosing Crashing Services using KQL, ES\|QL & APIs | ✅ Completed |
+| **Task 2** | **Log Pipeline & Parsing** | Logstash Grok & ECS Extraction for Unstructured Logs (Gin HTTP & Payment API) | 🟢 Active / Ready |
 | **Task 3** | **Ingestion Optimization** | Storage Cost Control: Noise Drop Filters (Suppressing internal retry loops) | ⏳ Upcoming |
 | **Task 4** | **Full-Stack Correlation** | Correlating Log Spikes with Node & Pod Resource Metrics (Metricbeat) | ⏳ Upcoming |
 | **Task 5** | **Index Lifecycle Management** | Production Hot-Warm-Delete ILM Policy & Index Templates | ⏳ Upcoming |
@@ -234,3 +234,132 @@ POST /_query
 2. **`sample-logger` Findings**:
    - Periodically logs `High latency detected on checkout service: 1250ms` and `Payment gateway timed out (code: 504)`.
    - Structured JSON fields (`order_id`, `error.code`) are correctly parsed into separate ECS fields by Logstash.
+
+---
+
+# 🎯 Task 2: Building Production Logstash Ingestion Pipelines with Grok Filters & ECS Alignment
+
+### 🏢 Real-World Production Problem
+In a Kubernetes microservices environment, applications emit logs in diverse, unstructured formats:
+
+1. **`go-service-a` in namespace `dev`** runs a Gin HTTP web server that prints:
+   ```text
+   [GIN] 2026/10/19 - 07:14:52 | 404 |      85.767µs |     10.244.1.15 | GET      "/metrics"
+   ```
+   Without parsing, this entire line is stored as a single raw string in `message`.
+   - You **cannot** filter by HTTP status code (`http.response.status_code >= 400`).
+   - You **cannot** aggregate or build Kibana Lens charts of top requested paths (`url.path`) or HTTP verbs (`http.request.method`).
+2. **`payment-api-failing` in namespace `default`** prints:
+   ```text
+   2026-10-19T07:09:47.000Z [default/payment-api-failing/payment-api] FATAL Critical downstream dependency unreachable. Exiting.
+   ```
+   Without parsing, the log level `FATAL` is treated as plain text and collapses into `ERROR`, and the raw timestamp and pod bracket header pollute `message`.
+
+Your objective as the Observability Engineer is to add **Logstash Grok filters** to parse these logs into Elastic Common Schema (ECS) fields, deploy the pipeline upgrade via Helm, and verify the structured fields in Kibana.
+
+---
+
+### 📝 Task Objectives
+1. Inspect the incoming raw messages from `go-service-a` and `payment-api-failing`.
+2. Author Grok patterns matching:
+   - **Gin Access Logs**: Extract `http.response.status_code` (integer), `client.ip`, `http.request.method`, `url.path`, and duration.
+   - **Payment API Logs**: Extract true `log.level` (`FATAL`, `ERROR`, `WARN`, `INFO`), set real `@timestamp`, and clean `message`.
+3. Update `logstash-values.yml` under `logstashPipeline: logstash.conf:`.
+4. Deploy the update via Helm: `helm upgrade logstash elastic/logstash -f logstash-values.yml -n logging`.
+5. Verify in Kibana Discover or Dev Tools that `http.response.status_code` and clean `log.level` are queryable!
+
+---
+
+## 💡 Task 2: Step-by-Step Solution & Implementation
+
+### Step 1: Update `logstash-values.yml`
+Add the Grok filter blocks inside the `filter { ... }` block in `logstash-values.yml`:
+
+```ruby
+      # 3. GIN HTTP ACCESS LOG PARSER (dev microservices)
+      else if [message] =~ /^\[GIN\]/ {
+        grok {
+          match => {
+            "message" => "^\[GIN\]\s+%{YEAR}/%{MONTHNUM}/%{MONTHDAY}\s+-\s+%{TIME}\s+\|\s+%{NUMBER:[http][response][status_code]:int}\s+\|\s+%{DATA:[event][duration]}\s+\|\s+%{IP:[client][ip]}\s+\|\s+%{WORD:[http][request][method]}\s+\"%{NOTSPACE:[url][path]}\""
+          }
+        }
+      }
+
+      # 4. PAYMENT API / BRACKETED MICROSERVICE PARSER
+      else if [message] =~ /^20\d\d-\d\d-\d\dT/ and [message] =~ /\[default\/payment-api/ {
+        grok {
+          match => {
+            "message" => "^%{TIMESTAMP_ISO8601:[@metadata][event_time]}\s+\[%{DATA:[@metadata][ns]}/%{DATA:[@metadata][pod]}/%{DATA:[@metadata][container]}\]\s+%{WORD:[log][level]}\s+%{GREEDYDATA:[@metadata][clean_msg]}$"
+          }
+        }
+        if [@metadata][clean_msg] {
+          mutate {
+            replace => { "message" => "%{[@metadata][clean_msg]}" }
+          }
+          date {
+            match => [ "[@metadata][event_time]", "ISO8601" ]
+            target => "@timestamp"
+          }
+        }
+      }
+```
+
+### Step 2: Deploy the Upgrade to Kubernetes
+Run:
+```bash
+helm upgrade logstash elastic/logstash -f logstash-values.yml -n logging
+kubectl rollout status statefulset logstash-logstash -n logging
+```
+
+---
+
+### Step 3: Verification Queries & Testing
+
+#### 1. In Kibana Discover (`http://localhost:5601`):
+- Filter by HTTP 404 client errors:
+  ```kql
+  http.response.status_code: 404
+  ```
+- Filter by HTTP method and endpoint:
+  ```kql
+  http.request.method: "GET" and url.path: "/metrics"
+  ```
+- Search for the newly parsed `FATAL` level logs:
+  ```kql
+  log.level: "FATAL"
+  ```
+
+#### 2. In Kibana Dev Tools Console (ES|QL Aggregation):
+```sql
+POST /_query
+{
+  "query": """
+    FROM elk-logstash-*
+    | WHERE http.response.status_code IS NOT NULL
+    | STATS count = COUNT() BY http.response.status_code, http.request.method, url.path
+    | SORT count DESC
+  """
+}
+```
+
+#### 3. Via Terminal (cURL to Elasticsearch):
+```bash
+curl -sk -u elastic:0P1rf1AiLY0ucHSd \
+  "https://172.18.0.2:30920/elk-logstash-*/_search" \
+  -H 'Content-Type: application/json' -d '{
+  "query": {
+    "exists": { "field": "http.response.status_code" }
+  },
+  "size": 3,
+  "sort": [{ "@timestamp": "desc" }],
+  "_source": ["@timestamp", "service.name", "http.response.status_code", "http.request.method", "url.path", "client.ip"]
+}' | jq '.hits.hits[]._source'
+```
+
+---
+
+### 🔍 Production Takeaway
+1. **ECS Alignment**: Mapping fields like `http.response.status_code`, `http.request.method`, `url.path`, and `client.ip` ensures seamless compatibility with built-in Kibana Observability dashboards, APM UI, and SIEM security correlation.
+2. **Target Field Types**: Using `:int` in `%{NUMBER:[http][response][status_code]:int}` ensures Elasticsearch indexes the status code as a numeric field, enabling range queries like `http.response.status_code >= 500`.
+3. **Clean Message**: Moving metadata into dedicated fields and replacing `message` with the actual clean log text improves readability in Discover and reduces storage overhead.
+
