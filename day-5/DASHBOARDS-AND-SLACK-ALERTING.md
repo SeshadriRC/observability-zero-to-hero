@@ -165,6 +165,9 @@ kubectl logs -l app=ecommerce-simulator --tail=10
 6. Click **Save and return**.
    - **Title**: `Top Erroring Microservices`.
 
+<img width="1917" height="861" alt="image" src="https://github.com/user-attachments/assets/6b32e4e2-fdd5-41ed-b846-8d6416714b55" />
+
+
 #### 4. Create Panel 3: Application Error Rate Percentage (Metric Gauge)
 1. Click **Create visualization**.
 2. Change the Chart Type to **Metric**.
