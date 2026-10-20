@@ -232,6 +232,9 @@ kubectl logs -l app=ecommerce-simulator --tail=10
 
 <img width="1917" height="877" alt="image" src="https://github.com/user-attachments/assets/b458c1ac-5a24-4e9e-9558-9d9a6f06e9b5" />
 
+<img width="1917" height="887" alt="image" src="https://github.com/user-attachments/assets/0758cb9d-5e7e-4d14-a9b7-0704b97ed890" />
+
+<img width="1917" height="801" alt="image" src="https://github.com/user-attachments/assets/17c7ce8c-285c-492c-a69b-bb2f046b1c8b" />
 
 ---
 
