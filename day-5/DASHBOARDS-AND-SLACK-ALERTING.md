@@ -188,6 +188,13 @@ kubectl logs -l app=ecommerce-simulator --tail=10
 7. Click **Save and return**.
    - **Title**: `Application Error Rate`.
 
+<img width="1917" height="866" alt="image" src="https://github.com/user-attachments/assets/42ba23e7-5bdf-47bf-a907-5632a4124922" />
+
+<img width="1361" height="737" alt="image" src="https://github.com/user-attachments/assets/3c300215-45b9-405b-87b9-87541305995a" />
+
+<img width="1917" height="862" alt="image" src="https://github.com/user-attachments/assets/f06fa5af-2e34-4326-a195-0314075602ea" />
+
+
 #### 5. Create Panel 4: Live Filtered Error Log Stream (Discover Embed)
 1. From the main menu (☰), navigate to **Analytics** $\to$ **Discover**.
 2. Select the Data View **`Kubernetes Logs (ELK)` (`elk-*`)**.
@@ -202,8 +209,17 @@ kubectl logs -l app=ecommerce-simulator --tail=10
    - `error.code`
    - `order_id`
    - `message`
+
+<img width="1917" height="873" alt="image" src="https://github.com/user-attachments/assets/88b6b757-d8bc-49b7-acde-5beff32fa4fc" />
+
 5. Click **Save** in Discover's top toolbar $\to$ Name it `E-Commerce Live Error Feed`.
-6. Return to your Dashboard $\to$ Click **Add from library** $\to$ Select `E-Commerce Live Error Feed`.
+
+<img width="1917" height="787" alt="image" src="https://github.com/user-attachments/assets/b0854291-6eb8-40de-b213-3cf45b29d16b" />
+
+7. Return to your Dashboard $\to$ Click **Add from library** $\to$ Select `E-Commerce Live Error Feed`.
+
+<img width="1917" height="631" alt="image" src="https://github.com/user-attachments/assets/b4077095-b2bd-4083-a194-b6602f818d3f" />
+
 
 #### 6. Organize and Save the Dashboard
 1. Arrange the grid layout:
@@ -213,6 +229,9 @@ kubectl logs -l app=ecommerce-simulator --tail=10
 2. Click **Save** in the top navigation bar.
 3. Set the Title to: **`[DevOps] E-Commerce Observability Dashboard`**.
 4. Check **Store time with dashboard** so opening the dashboard defaults to the `Last 15 minutes` window.
+
+<img width="1917" height="877" alt="image" src="https://github.com/user-attachments/assets/b458c1ac-5a24-4e9e-9558-9d9a6f06e9b5" />
+
 
 ---
 
