@@ -6,10 +6,11 @@
 
 ## 📑 Table of Contents
 1. [Architecture: Alerting & Actions Framework](#1-architecture-alerting--actions-framework)
-2. [Building Production DevOps Dashboards with Kibana Lens](#2-building-production-devops-dashboards-with-kibana-lens)
-   - [The 4 Essential DevOps Panels](#21-the-4-essential-devops-panels)
-   - [Step-by-Step UI Creation Guide](#22-step-by-step-ui-creation-guide)
-   - [Automating Dashboards via GitOps (Saved Objects API)](#23-automating-dashboards-via-gitops-saved-objects-api)
+2. [Building Production E-Commerce Dashboards with Kibana Lens](#2-building-production-e-commerce-dashboards-with-kibana-lens)
+   - [2.1. The E-Commerce Simulator Workload](#21-the-e-commerce-simulator-workload)
+   - [2.2. The 4 Essential DevOps Panels](#22-the-4-essential-devops-panels)
+   - [2.3. Step-by-Step UI Creation Guide](#23-step-by-step-ui-creation-guide)
+   - [2.4. Automating Dashboards via GitOps (Saved Objects API)](#24-automating-dashboards-via-gitops-saved-objects-api)
 3. [Integrating Alerts with Slack (Step-by-Step)](#3-integrating-alerts-with-slack-step-by-step)
    - [Step 1: Create Slack Incoming Webhook](#31-step-1-create-slack-incoming-webhook)
    - [Step 2: Create Slack Connector in Kibana (UI & API)](#32-step-2-create-slack-connector-in-kibana-ui--api)
@@ -58,80 +59,158 @@ flowchart LR
 
 ---
 
-## 2. Building Production DevOps Dashboards with Kibana Lens
+## 2. Building Production E-Commerce Dashboards with Kibana Lens
 
-A great observability dashboard answers three questions within 5 seconds:
-1. *Is there an active incident right now?* (Top-level error rate / health indicators)
-2. *Which microservice is failing?* (Breakdown by `service.name` or `kubernetes.container.name`)
-3. *What is the exact error?* (Embedded live log stream with filtered columns)
+A production-grade microservice dashboard gives an on-call engineer immediate answers to three critical questions within 5 seconds:
+1. *Is there an active incident right now?* (Top-level error rate gauge / health status)
+2. *Which microservice is failing?* (Breakdown of errors by `service.name`)
+3. *What is the exact error and customer impact?* (Embedded live log stream with `error.code`, `order_id`, and `message`)
 
 ---
 
-### 2.1. The 4 Essential DevOps Panels
+### 2.1. The E-Commerce Simulator Workload
+
+We simulate a real-world e-commerce microservices backend using [`ecommerce-simulator.yaml`](ecommerce-simulator.yaml). It continuously generates structured JSON logs across 4 microservices:
+
+| Microservice (`service.name`) | Log Levels Emitted | Simulated Events & Failure Scenarios |
+| :--- | :--- | :--- |
+| **`frontend`** | `INFO`, `WARN` | Page rendering, checkout page loads, slow asset bundle latency (1150ms). |
+| **`auth-service`** | `INFO`, `WARN`, `ERROR` | JWT session validation, expired refresh tokens, invalid Bearer signatures (`error_code: 401`). |
+| **`order-service`** | `INFO`, `WARN`, `ERROR` | Order queued, inventory lock retry, database write conflict deadlock (`error_code: 500`). |
+| **`payment-service`** | `INFO`, `WARN`, `ERROR` | Stripe payments captured, gateway high latency (2800ms), gateway connection timeouts (`error_code: 504`). |
+
+#### Log Pipeline Processing:
+Each container log is emitted as JSON and shipped via Filebeat to Logstash. Logstash parses the JSON keys directly into ECS-compliant fields in Elasticsearch:
+- `service.name`: `frontend`, `auth-service`, `order-service`, `payment-service`
+- `log.level`: `INFO`, `WARN`, `ERROR`
+- `error.code`: `401`, `500`, `504`
+- `order_id`: Order transaction ID (e.g. `5001`, `5002`)
+- `message`: Human-readable log details
+- `@timestamp`: Event timestamp
+
+#### Deploying & Verifying the Workload:
+```bash
+# Apply the workload
+kubectl apply -f ecommerce-simulator.yaml
+
+# Verify pod status
+kubectl get pods -l app=ecommerce-simulator
+
+# Tail live multi-service logs
+kubectl logs -l app=ecommerce-simulator --tail=10
+```
+
+---
+
+### 2.2. The 4 Essential DevOps Panels
 
 ```text
 +-----------------------------------------------------------------------------------+
 |  [Panel 1: Error Rate Gauge]        |  [Panel 2: Top Failing Services (Donut)]     |
-|  ERROR %: 4.8% (Target < 1%)        |  - sample-logger: 78%                        |
-|  Status: WARNING                     |  - payment-api: 22%                          |
+|  ERROR %: 5.2% (Target < 5%)        |  - payment-service: 48%                      |
+|  Status: WARNING                     |  - order-service: 32%                        |
+|                                     |  - auth-service: 20%                         |
 +-----------------------------------------------------------------------------------+
 |  [Panel 3: Log Volume Over Time by Severity (Stacked Bar Chart)]                   |
 |  [Bars partitioned by INFO (Green), WARN (Yellow), ERROR (Red) over time]          |
 +-----------------------------------------------------------------------------------+
 |  [Panel 4: Live Filtered Error Log Stream (Discover Table Embed)]                  |
-|  Time | Service | Level | Message | Order ID | Error Code                          |
+|  Time | Service | Level | Error Code | Order ID | Message                         |
 +-----------------------------------------------------------------------------------+
 ```
 
 ---
 
-### 2.2. Step-by-Step UI Creation Guide
+### 2.3. Step-by-Step UI Creation Guide
+
+#### 0. Environment Setup & Access
+1. Open Kibana in your browser: **[http://localhost:5601](http://localhost:5601)**
+   - **Username**: `elastic`
+   - **Password**: `0P1rf1AiLY0ucHSd`
+2. Set the global time range in the top-right corner to **Last 15 minutes**.
+3. Set the refresh interval to **5 seconds** (auto-refresh).
 
 #### 1. Open Dashboard Hub
-1. In Kibana, open the menu (☰) $\to$ **Analytics** $\to$ **Dashboard**.
+1. In Kibana, open the main menu (☰) $\to$ **Analytics** $\to$ **Dashboard**.
 2. Click **Create new dashboard**.
 
-#### 2. Create Panel 1: Log Volume by Level (Stacked Bar Chart)
-1. Click **Create visualization** (opens **Lens**).
-2. Ensure Data View is set to **`elk-*`** (or `elk-logstash-*`).
+#### 2. Create Panel 1: Log Volume Over Time by Severity (Stacked Bar Chart)
+1. Click **Create visualization** (opens **Kibana Lens**).
+2. Ensure the top-left Data View is set to **`Kubernetes Logs (ELK)` (`elk-*`)**.
 3. **Configuration**:
-   - Drag **`@timestamp`** to the **Horizontal axis** (X-axis).
-   - Drag **`Records`** (Count) to the **Vertical axis** (Y-axis).
+   - Drag **`@timestamp`** onto the **Horizontal axis** (X-axis).
+   - Drag **`Count of records`** onto the **Vertical axis** (Y-axis).
    - Drag **`log.level`** into the **Break down by** field.
-   - Set Chart type to **Stacked Bar**.
-   - Customize colors: Click the color swatch next to `ERROR` $\to$ Red, `WARN` $\to$ Orange/Yellow, `INFO` $\to$ Green.
-4. Click **Save and return** (Title: `Log Ingestion Volume by Severity`).
+   - Set Chart type (top dropdown) to **Stacked Bar**.
+4. **Customize Colors**:
+   - In the legend or right-hand panel, click the color swatch for each level:
+     - `ERROR` $\to$ **Red** (`#E74C3C`)
+     - `WARN` $\to$ **Yellow / Orange** (`#F39C12`)
+     - `INFO` $\to$ **Green** (`#2ECC71`)
+5. In the top bar, click **Save and return**.
+   - **Title**: `Log Ingestion Volume by Severity`.
 
 #### 3. Create Panel 2: Top Failing Microservices (Donut Chart)
-1. Click **Create visualization**.
-2. Top search bar: Enter filter: `log.level : "ERROR"`.
-3. Set Chart Type (top dropdown) to **Donut**.
-4. Drag **`service.name`** into **Slice by**.
-5. Metric: `Count of records`.
-6. Click **Save and return** (Title: `Top Erroring Services`).
+1. Click **Create visualization** in your dashboard.
+2. In the top KQL search bar, add a filter for errors only:
+   ```kql
+   log.level : "ERROR"
+   ```
+   Press **Enter**.
+3. Set the Chart Type dropdown (top-center) to **Donut** (or **Pie**).
+4. In the field list on the left:
+   - Drag **`service.name`** into **Slice by**.
+   - Confirm the metric is **`Count of records`**.
+5. Notice the donut chart automatically groups errors by `payment-service`, `order-service`, and `auth-service`.
+6. Click **Save and return**.
+   - **Title**: `Top Erroring Microservices`.
 
-#### 4. Create Panel 3: Error Rate Percentage (Metric Gauge)
+#### 4. Create Panel 3: Application Error Rate Percentage (Metric Gauge)
 1. Click **Create visualization**.
-2. Set Chart Type to **Metric**.
-3. In the formula editor, enter:
+2. Change the Chart Type to **Metric**.
+3. In the right configuration panel, click on **Primary metric** to open the calculation editor.
+4. Switch to the **Formula** tab and enter:
    ```text
    count(kql='log.level : "ERROR"') / count()
    ```
-4. Format: Set Value format to **Percent** (`0.0%`).
-5. Color palette: Set green if $< 1\%$, yellow if $1-5\%$, red if $> 5\%$.
-6. Click **Save and return** (Title: `Application Error Rate`).
+5. Under **Value formatting**, select **Percent** (e.g. `0.0%`).
+6. Under **Coloring & Palettes**:
+   - Set threshold ranges:
+     - `< 5%`: **Green** (Normal SLA)
+     - `5% - 15%`: **Yellow** (Elevated latency/transient retries)
+     - `> 15%`: **Red** (Critical Outage)
+7. Click **Save and return**.
+   - **Title**: `Application Error Rate`.
 
-#### 5. Create Panel 4: Live Filtered Log Stream (Discover Embed)
-1. Click **Add from library** (or Save your Discover view).
-2. Choose your saved search or embed Discover directly with columns:
-   - `@timestamp`, `service.name`, `log.level`, `message`, `order_id`.
-3. Position at the bottom spanning full width.
-4. Set top-right auto-refresh to **5 seconds**.
-5. Click **Save** in the top navigation bar to save the complete Dashboard (`[DevOps] Kubernetes ELK Observability`).
+#### 5. Create Panel 4: Live Filtered Error Log Stream (Discover Embed)
+1. From the main menu (☰), navigate to **Analytics** $\to$ **Discover**.
+2. Select the Data View **`Kubernetes Logs (ELK)` (`elk-*`)**.
+3. Enter the KQL query in the search bar:
+   ```kql
+   log.level : "ERROR"
+   ```
+4. In the field list on the left, click the **+ (plus)** icon next to each field to add it as a column:
+   - `@timestamp`
+   - `service.name`
+   - `log.level`
+   - `error.code`
+   - `order_id`
+   - `message`
+5. Click **Save** in Discover's top toolbar $\to$ Name it `E-Commerce Live Error Feed`.
+6. Return to your Dashboard $\to$ Click **Add from library** $\to$ Select `E-Commerce Live Error Feed`.
+
+#### 6. Organize and Save the Dashboard
+1. Arrange the grid layout:
+   - **Top row**: Place `Application Error Rate` (Metric Gauge) on the left (width: 16) and `Top Erroring Microservices` (Donut) on the right (width: 32).
+   - **Middle row**: Place `Log Ingestion Volume by Severity` spanning full width (width: 48).
+   - **Bottom row**: Place `E-Commerce Live Error Feed` spanning full width (width: 48).
+2. Click **Save** in the top navigation bar.
+3. Set the Title to: **`[DevOps] E-Commerce Observability Dashboard`**.
+4. Check **Store time with dashboard** so opening the dashboard defaults to the `Last 15 minutes` window.
 
 ---
 
-### 2.3. Automating Dashboards via GitOps (Saved Objects API)
+### 2.4. Automating Dashboards via GitOps (Saved Objects API)
 
 In modern CI/CD, dashboards are stored in git as JSON/NDJSON and automatically pushed to Kibana on deployment.
 
@@ -329,10 +408,11 @@ During maintenance windows or known deployments:
 
 To verify your Slack alerting integration in real-time:
 
-### 1. Confirm `sample-logger` is running
-The sample app generates continuous errors every few seconds:
+### 1. Confirm `ecommerce-simulator` or `sample-logger` is running
+The apps generate continuous multi-service errors every few seconds:
 ```bash
-kubectl get pods -l app=sample-logger
+kubectl get pods -l app=ecommerce-simulator
+kubectl logs -l app=ecommerce-simulator --tail=5
 ```
 
 ### 2. Verify Alert Rule Execution in Kibana
