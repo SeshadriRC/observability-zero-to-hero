@@ -14,7 +14,7 @@
 > **Configuration Manifests:**
 > - [`elasticsearch-values.yml`](elasticsearch-values.yml) | [`kibana.yml`](kibana.yml) | [`fluentbit-values.yaml`](fluentbit-values.yaml)
 > - [`filebeat-values.yml`](filebeat-values.yml) | [`logstash-values.yml`](logstash-values.yml) | [`metric-beat-values.yml`](metric-beat-values.yml) | [`metric-rbac.yml`](metric-rbac.yml)
-> - [`sample-logger.yaml`](sample-logger.yaml)
+> - [`sample-logger.yaml`](sample-logger.yaml) | [`ecommerce-simulator.yaml`](ecommerce-simulator.yaml)
 
 ---
 

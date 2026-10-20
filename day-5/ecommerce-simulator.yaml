@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ecommerce-simulator
+  namespace: default
+  labels:
+    app: ecommerce-simulator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ecommerce-simulator
+  template:
+    metadata:
+      labels:
+        app: ecommerce-simulator
+    spec:
+      containers:
+      - name: simulator
+        image: busybox:1.36
+        resources:
+          limits:
+            cpu: 100m
+            memory: 64Mi
+          requests:
+            cpu: 30m
+            memory: 32Mi
+        args:
+        - /bin/sh
+        - -c
+        - |
+          order_id=5000
+          while true; do
+            now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+            rand=$(( $(od -An -N2 -i /dev/urandom | tr -d ' ') % 100 ))
+
+            if [ $rand -lt 30 ]; then
+              # Frontend logs (mostly INFO, occasional WARN)
+              if [ $rand -lt 25 ]; then
+                echo "{\"timestamp\": \"$now\", \"level\": \"INFO\", \"app\": \"frontend\", \"message\": \"Rendered checkout page for customer\", \"order_id\": $order_id}"
+              else
+                echo "{\"timestamp\": \"$now\", \"level\": \"WARN\", \"app\": \"frontend\", \"message\": \"Asset bundle slow to load: 1150ms\", \"order_id\": $order_id}"
+              fi
+
+            elif [ $rand -lt 55 ]; then
+              # Auth service logs
+              if [ $rand -lt 48 ]; then
+                echo "{\"timestamp\": \"$now\", \"level\": \"INFO\", \"app\": \"auth-service\", \"message\": \"JWT token verified for session\", \"order_id\": $order_id}"
+              elif [ $rand -lt 52 ]; then
+                echo "{\"timestamp\": \"$now\", \"level\": \"WARN\", \"app\": \"auth-service\", \"message\": \"Expired refresh token submitted\", \"order_id\": $order_id}"
+              else
+                echo "{\"timestamp\": \"$now\", \"level\": \"ERROR\", \"app\": \"auth-service\", \"message\": \"Authentication failed: invalid signature on Bearer token\", \"order_id\": $order_id, \"error_code\": 401}"
+              fi
+
+            elif [ $rand -lt 80 ]; then
+              # Order service logs
+              if [ $rand -lt 72 ]; then
+                echo "{\"timestamp\": \"$now\", \"level\": \"INFO\", \"app\": \"order-service\", \"message\": \"Order validated and placed in processing queue\", \"order_id\": $order_id}"
+              elif [ $rand -lt 76 ]; then
+                echo "{\"timestamp\": \"$now\", \"level\": \"WARN\", \"app\": \"order-service\", \"message\": \"Inventory lock retry attempt 2 for SKU-8842\", \"order_id\": $order_id}"
+              else
+                echo "{\"timestamp\": \"$now\", \"level\": \"ERROR\", \"app\": \"order-service\", \"message\": \"Database write conflict: order lock timeout\", \"order_id\": $order_id, \"error_code\": 500}"
+              fi
+
+            else
+              # Payment service logs
+              if [ $rand -lt 88 ]; then
+                echo "{\"timestamp\": \"$now\", \"level\": \"INFO\", \"app\": \"payment-service\", \"message\": \"Payment transaction captured successfully\", \"order_id\": $order_id}"
+              elif [ $rand -lt 93 ]; then
+                echo "{\"timestamp\": \"$now\", \"level\": \"WARN\", \"app\": \"payment-service\", \"message\": \"Payment gateway high response latency: 2800ms\", \"order_id\": $order_id}"
+              else
+                echo "{\"timestamp\": \"$now\", \"level\": \"ERROR\", \"app\": \"payment-service\", \"message\": \"Payment processing failed: gateway connection timeout\", \"order_id\": $order_id, \"error_code\": 504}"
+              fi
+            fi
+
+            order_id=$((order_id + 1))
+            sleep 2
+          done
