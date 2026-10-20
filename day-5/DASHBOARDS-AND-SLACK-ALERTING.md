@@ -150,6 +150,9 @@ kubectl logs -l app=ecommerce-simulator --tail=10
 5. In the top bar, click **Save and return**.
    - **Title**: `Log Ingestion Volume by Severity`.
 
+<img width="1916" height="858" alt="image" src="https://github.com/user-attachments/assets/56d13c22-f188-4e23-a52b-4fcfcefb9545" />
+
+
 #### 3. Create Panel 2: Top Failing Microservices (Donut Chart)
 1. Click **Create visualization** in your dashboard.
 2. In the top KQL search bar, add a filter for errors only:
