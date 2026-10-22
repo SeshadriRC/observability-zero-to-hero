@@ -130,4 +130,18 @@ In the tutorial, when you clicked the "Logs" tab in a trace view, logs were auto
 
 `Answer: Traceid`
 
+Outstanding work! You've successfully completed this lab and demonstrated your ability to:
+
+**Conclusion**
+
+Navigate the APM Service Map to visualize service architecture.
+
+Identify key observability metrics for the checkout service.
+
+Explore service dependencies and transactions.
+
+Understand how distributed tracing enables log correlation.
+
+Next, you'll apply these skills to troubleshoot a real problem and find its root cause using the Service Map, metrics, traces, and correlated logs.
+
 ---
