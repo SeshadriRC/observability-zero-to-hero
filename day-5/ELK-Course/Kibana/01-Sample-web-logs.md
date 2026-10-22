@@ -26,3 +26,19 @@ Kibana's Welcome page appears when your Elasticsearch cluster has no data. In pr
 <img width="1491" height="958" alt="image" src="https://github.com/user-attachments/assets/c3e73f92-e641-4b04-bf72-f2850430c666" />
 
 <img width="1455" height="621" alt="image" src="https://github.com/user-attachments/assets/3a367c26-3d8e-4b92-ab43-539990916bd6" />
+
+4. You should see three sample datasets:
+
+eCommerce orders
+
+flight data
+
+web logs
+
+Add all three datasets by clicking on the button Add data
+
+<img width="1447" height="937" alt="image" src="https://github.com/user-attachments/assets/014ac67d-9c7d-47bf-9075-64e73a4e3cea" />
+
+🔍 Why this matters
+
+Each sample dataset creates Elasticsearch indices populated with realistic data, plus pre-built dashboards, visualizations, and Canvas workpads. This gives you working examples to explore and learn from before building your own. Throughout this course, you'll reference these datasets frequently.
