@@ -2,17 +2,16 @@ In this lesson, you'll explore system logs from a host machine using both curate
 
 
 Key terms
-Term	Definition
-Data view	A pattern that defines which indices Discover and dashboards can query (e.g., logs-*)
-KQL (Kibana Query Language)	A simple query syntax for filtering data in Kibana using field:value pairs and boolean operators
-Syslog	A standard protocol and format for system logging on Unix/Linux systems
-event.dataset	A field that identifies the source integration or module that collected the log entry
+<img width="1112" height="533" alt="image" src="https://github.com/user-attachments/assets/2ed98e3c-d664-4d22-8cff-3de8110ac9b6" />
 
 System logs
-Managed Dashboards
+
+**Managed Dashboards**
+
 Search for logs system dashboards.
 
 🔍 Why this matters
+
 Integrations often include pre-built dashboards that provide immediate visibility into collected data. Searching by the integration name helps you find these curated visualizations without building them from scratch.
 
 Access the [Logs System] Syslog dashboard, which provides an overview of your system logs.eoe-2-2-c2-syslog-dashboard-1.png
@@ -22,9 +21,11 @@ Access the [Logs System] Syslog dashboard, which provides an overview of your sy
 Set the timepicker to Today and type the query process.name: "python3" in the search bar to determine if any Python processes are running and view related information.Screenshot 2026-01-23 at 8.41.51 AM.png
 
 Hint
+
 Scroll down to the Syslog logs table to have a detailed view of the search results.
 
 Discover
+
 Navigate to Discover and select the logs-* data view.eoe-2-2-c2-Discover-Logs-DV.png
 
 🔍 Why this matters
