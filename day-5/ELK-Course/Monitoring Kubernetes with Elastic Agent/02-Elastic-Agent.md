@@ -22,6 +22,8 @@ In this challenge you will follow the Kibana quickstart and learn how to use the
 
 6. Next, go back to Kibana and wait until data to be shipped, so you can start monitoring your Kubernetes cluster.\
 
+<img width="1148" height="593" alt="image" src="https://github.com/user-attachments/assets/a99634a7-8970-4a8d-8d6d-7c66fe62479f" />
+
 <img width="1412" height="708" alt="image" src="https://github.com/user-attachments/assets/3ea23b59-93dd-4ff4-a2d5-1944a1676b37" />
 
 7. Now, you can start visualizing the data being collected, which you will be doing in the next challenges.
