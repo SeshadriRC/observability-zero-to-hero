@@ -219,3 +219,74 @@ Click `Add processor`, configure the `remove` processor as follows and click `Ad
 <img width="2872" height="1522" alt="image" src="https://github.com/user-attachments/assets/1a7ea88b-8174-43f5-b35c-3db1ea8e7c41" />
 
 7. Test `my_redislogs_pipeline` one more time, so you can see the `message` field is gone.
+
+💡Hints
+
+First, click View output.
+
+<img width="2816" height="1774" alt="image" src="https://github.com/user-attachments/assets/c6a2837c-5b40-4d4d-914a-afea1b6c0c3f" />
+
+Then, click Refresh output if it is not refreshed automatically.
+
+<img width="1072" height="1448" alt="image" src="https://github.com/user-attachments/assets/be13829e-9f63-4c7e-8d7e-f749518d3f2f" />
+
+8. Sometimes MySQL general logs expand the query body into several lines, which might break our `grok` pattern. To handle this issue in a simple way, add an on failure handler to the on failure `grok` processor for dropping documents that fail to parse.
+
+🔍 Why this matters
+
+Real-world logs often contain edge cases that don't match your expected format—multi-line messages, corrupted entries, or format variations. On-failure handlers let you decide what happens to these documents: drop them, route them elsewhere, or tag them for review.
+
+⚠️ Dropping documents discards data
+
+The `drop` processor permanently discards documents that fail parsing. In production, you might instead use a `set` processor to tag failed documents and route them to a separate index for investigation, preserving the data while keeping your main index clean.
+
+💡Hints
+
+First, click the three dots of the grok processor and select Add on failure handler.
+
+<img width="2852" height="1792" alt="image" src="https://github.com/user-attachments/assets/83063f03-c02c-4364-80a0-b9b279261f66" />
+
+Then, configure the on failure handler with a `drop` processor and click `Add`.
+
+<img width="1430" height="1428" alt="image" src="https://github.com/user-attachments/assets/0c834dae-9733-4e33-be50-452d31113b24" />
+
+<img width="1177" height="876" alt="image" src="https://github.com/user-attachments/assets/02c1b6a9-d159-4a4d-8087-c670eb0d8ce3" />
+
+9. The `my_redislogs_pipeline` is fine for now, so click `Create pipeline` to save it. In the next labs you will be adding more processors to this pipeline, so at the end of this module you will be able to use it in the Custom Logs integration to properly parse Redis (Valkey) general logs.
+
+<img width="1915" height="955" alt="image" src="https://github.com/user-attachments/assets/3e53f45c-e774-4c32-aed5-b16fd8f062ba" />
+
+---
+
+**Solution (API Version)**
+
+```bash
+PUT _ingest/pipeline/my_redislogs_pipeline
+{
+  "processors": [
+    {
+      "grok": {
+        "field": "message",
+        "patterns": [
+          "%{TIMESTAMP_ISO8601:log_pod.timestamp} %{WORD:log_pod.output} %{CHAR:log_pod.type} %{POSINT:redis.pid}:%{CHAR:redis.role} %{REDISTIMESTAMP2:redis.timestamp} %{REDISLEVEL:redis.log_level} %{GREEDYDATA:redis.message}"
+        ],
+        "pattern_definitions": {
+          "CHAR": "[a-zA-Z]",
+          "REDISLEVEL": "[.\\-*#]",
+          "REDISTIMESTAMP2": "%{MONTHDAY} %{MONTH} %{YEAR} %{TIME}"
+        },
+        "on_failure": [
+          {  "drop": {}  }
+        ]
+      }
+    },
+    {
+      "remove": {  "field": "message" }
+    }
+  ]
+}
+```
+
+**Conclusion**
+
+In this lesson, you created an ingest pipeline to parse Valkey general logs, analyzed log formats, wrote patterns for structured fields, and handled documents that don't match expected format.
