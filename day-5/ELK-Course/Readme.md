@@ -3,4 +3,4 @@
 1. [Intro-to-Observability](https://github.com/SeshadriRC/observability-zero-to-hero/tree/main/day-5/ELK-Course/Intro-to-Observability)
 2. [Logs](https://github.com/SeshadriRC/observability-zero-to-hero/tree/main/day-5/ELK-Course/Logs)
 3. [Kibana](https://github.com/SeshadriRC/observability-zero-to-hero/tree/main/day-5/ELK-Course/Kibana)
-4. [Monitoring Kubernetes with Elastic Agent]()
+4. [Monitoring Kubernetes with Elastic Agent](https://github.com/SeshadriRC/observability-zero-to-hero/tree/main/day-5/ELK-Course/Monitoring%20Kubernetes%20with%20Elastic%20Agent)
