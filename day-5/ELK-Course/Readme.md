@@ -5,3 +5,4 @@
 3. [Kibana](https://github.com/SeshadriRC/observability-zero-to-hero/tree/main/day-5/ELK-Course/Kibana)
 4. [Monitoring Kubernetes with Elastic Agent](https://github.com/SeshadriRC/observability-zero-to-hero/tree/main/day-5/ELK-Course/Monitoring%20Kubernetes%20with%20Elastic%20Agent)
 5. [Extracting & Transforming Events](https://github.com/SeshadriRC/observability-zero-to-hero/tree/main/day-5/ELK-Course/Extracting%20%26%20Transforming%20Events)
+6. [Index Lifecycle Management](https://github.com/SeshadriRC/observability-zero-to-hero/tree/main/day-5/ELK-Course/Index%20Lifecycle%20Management)
