@@ -145,6 +145,9 @@ i. Select the History tab where you should see that the eCommerce store has been
 
 <img width="1738" height="1348" alt="image" src="https://github.com/user-attachments/assets/de45fd3c-42b1-4cfa-97a7-a51bb898093e" />
 
+<img width="1912" height="827" alt="image" src="https://github.com/user-attachments/assets/2a693e70-5103-474a-b024-03b37dd83999" />
+
+
 6. Trigger the alert
 
 a. Use the same approach as before to stop the front end:
