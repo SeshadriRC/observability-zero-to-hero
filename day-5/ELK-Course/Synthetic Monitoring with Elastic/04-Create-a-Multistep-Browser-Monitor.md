@@ -37,7 +37,7 @@ Set the store `endpoint` parameter to `frontend-proxy-nodeport`.
 {"endpoint": "frontend-proxy-nodeport"}
 ```
 
-<img width="2474" height="1198" alt="image" src="https://github.com/user-attachments/assets/70690b55-b228-47db-8475-b00e888f902a" />
+<img width="1917" height="857" alt="image" src="https://github.com/user-attachments/assets/bf617e0b-5133-47d7-a717-428a802a6326" />
 
 Click to learn more about journey structure
 
