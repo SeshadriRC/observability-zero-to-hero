@@ -16,8 +16,11 @@ Requirements
 Your monitor should:
 
 ✅ Successfully navigate through the complete customer journey
+
 ✅ Handle cart management (adding and emptying items)
+
 ✅ Complete with a successful binoculars purchase
+
 ✅ Run without errors and capture screenshots at key moments
 
 **Hints to Guide You**
