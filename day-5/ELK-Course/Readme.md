@@ -7,3 +7,4 @@
 5. [Extracting & Transforming Events](https://github.com/SeshadriRC/observability-zero-to-hero/tree/main/day-5/ELK-Course/Extracting%20%26%20Transforming%20Events)
 6. [Index Lifecycle Management](https://github.com/SeshadriRC/observability-zero-to-hero/tree/main/day-5/ELK-Course/Index%20Lifecycle%20Management)
 7. [Synthetic Monitoring with Elastic](https://github.com/SeshadriRC/observability-zero-to-hero/tree/main/day-5/ELK-Course/Synthetic%20Monitoring%20with%20Elastic)
+8. [Collect Application Data](https://github.com/SeshadriRC/observability-zero-to-hero/tree/main/day-5/ELK-Course/Collect%20Application%20Data)
