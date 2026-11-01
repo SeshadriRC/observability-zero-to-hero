@@ -8,3 +8,4 @@
 6. [Index Lifecycle Management](https://github.com/SeshadriRC/observability-zero-to-hero/tree/main/day-5/ELK-Course/Index%20Lifecycle%20Management)
 7. [Synthetic Monitoring with Elastic](https://github.com/SeshadriRC/observability-zero-to-hero/tree/main/day-5/ELK-Course/Synthetic%20Monitoring%20with%20Elastic)
 8. [Collect Application Data](https://github.com/SeshadriRC/observability-zero-to-hero/tree/main/day-5/ELK-Course/Collect%20Application%20Data)
+9. [Hello Dashboard](https://github.com/SeshadriRC/observability-zero-to-hero/tree/main/day-5/ELK-Course/Hello%20Dashboard)
