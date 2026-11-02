@@ -10,3 +10,4 @@
 8. [Collect Application Data](https://github.com/SeshadriRC/observability-zero-to-hero/tree/main/day-5/ELK-Course/Collect%20Application%20Data)
 9. [Hello Dashboard](https://github.com/SeshadriRC/observability-zero-to-hero/tree/main/day-5/ELK-Course/Hello%20Dashboard)
 10. [Create visualizations](https://github.com/SeshadriRC/observability-zero-to-hero/tree/main/day-5/ELK-Course/Create%20Visualizations)
+11. [Interactive Dashboards](https://github.com/SeshadriRC/observability-zero-to-hero/tree/main/day-5/ELK-Course/Interactive%20Dashboards)
